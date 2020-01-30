@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+data:
+  debug: "${DEBUG}"
+metadata:
+  labels:
+    app: k8s-gitrepo-vol
+  name: gitrepo-deploy-parameters

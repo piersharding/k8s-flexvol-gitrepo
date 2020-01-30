@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitrepo-flex-ds
+data:
+  vendor: "piersharding"
+  driver: "gitrepo"
