@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2019 Piers harding.
+# Copyright 2020 Piers harding.
 #
 # Deploy the FlexVolume driver gitrepo
 #
@@ -30,15 +30,11 @@ DEBUG=${DEBUG:-false}
 
 cd /flexmnt
 
-https://release.gitkraken.com/linux-standalone/gitkraken-amd64.tar.gz
-# the driver uses ctr for image pull and export
-if [ ! `which git` ]; then
-  echo "no existing git"
-  if [ ! -f "/flexmnt/git" ]; then
+# the driver uses git for image pull and export
+if [ ! -f "/flexmnt/git" ]; then
     echo "no git in /flexmnt"
     rm -rf /flexmnt/git_${GIT_VERSION}_amd64.deb /flexmnt/git_${GIT_VERSION}
     mkdir -p /flexmnt/git_${GIT_VERSION}
-    http://security.ubuntu.com/ubuntu/pool/main/g/git/git_2.17.1-1ubuntu0.5_amd64.deb
     wget -O /flexmnt/git_${GIT_VERSION}_amd64.deb http://security.ubuntu.com/ubuntu/pool/main/g/git/git_${GIT_VERSION}_amd64.deb
     cd /flexmnt/git_${GIT_VERSION}
     ar -xv /flexmnt/git_${GIT_VERSION}_amd64.deb
@@ -46,27 +42,19 @@ if [ ! `which git` ]; then
     mv usr/lib/git-core/git /flexmnt/git
     chmod a+x /flexmnt/git
     rm -rf /flexmnt/git_${GIT_VERSION}_amd64.deb /flexmnt/git_${GIT_VERSION}
-  fi
-  GIT_EXE="${DRIVER_LOCATION}/git"
-else
-  GIT_EXE=`which git`
 fi
+GIT_EXE="${DRIVER_LOCATION}/git"
 echo "git at: $(ls -latr /flexmnt/git)"
 
 # jq is used for parsing out details passed to driver
-if [ ! `which jq` ]; then
-  echo "no existing jq"
-  JQ_EXE="${DRIVER_LOCATION}/jq"
-  if [ ! -f "/flexmnt/jq" ]; then
+if [ ! -f "/flexmnt/jq" ]; then
     echo "no jq in /flexmnt"
     rm -f /flexmnt/jq-linux64
     wget -O /flexmnt/jq-linux64 https://github.com/stedolan/jq/releases/download/jq-${JQ_VERSION}/jq-linux64
     mv /flexmnt/jq-linux64 /flexmnt/jq
     chmod a+x /flexmnt/jq
-  fi
-else
-  JQ_EXE=`which jq`
 fi
+JQ_EXE="${DRIVER_LOCATION}/jq"
 echo "jq at: $(ls -latr /flexmnt/jq)"
 
 # set the environment file for the driver
@@ -82,7 +70,7 @@ cat /flexmnt/gitrepo_env.rc
 
 driver_dir=$VENDOR${VENDOR:+"~"}${DRIVER}
 if [ ! -d "/flexmnt/exec/$driver_dir" ]; then
-  mkdir -p "/flexmnt/exec/$driver_dir"
+    mkdir -p "/flexmnt/exec/$driver_dir"
 fi
 
 tmp_driver=.tmp_$DRIVER
@@ -92,5 +80,5 @@ mv -f "/flexmnt/exec/$driver_dir/$tmp_driver" "/flexmnt/exec/$driver_dir/$DRIVER
 printf "\n\n\n##### Deployment Complete #####\n"
 
 while : ; do
-  sleep 3600
+    sleep 3600
 done

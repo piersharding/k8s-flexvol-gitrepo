@@ -68,7 +68,7 @@ describe: ## describe Pods executed from deployment
 	echo ""; echo ""; echo ""; \
 	done
 
-test: push_test namespace ## deploy test
+test: namespace ## deploy test
 	kubectl apply -f tests/mount-test.yaml -n $(KUBE_NAMESPACE)
 
 test-results:  ## curl test

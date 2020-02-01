@@ -39,11 +39,11 @@ spec:
             valueFrom:
               configMapKeyRef:
                 name: gitrepo-deploy-parameters
-                key: ctrVersion
+                key: gitVersion
           - name: JQ_VERSION
             valueFrom:
               configMapKeyRef:
-                name: imagevol-deploy-parameters
+                name: gitrepo-deploy-parameters
                 key: jqVersion
           - name: HOST_TARGET
             valueFrom:
