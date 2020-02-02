@@ -158,15 +158,17 @@ checkandmount () {
         # ssh keys: https://superuser.com/questions/232373/how-to-tell-git-which-private-key-to-use
         # GIT_SSH_COMMAND='ssh -i ~/.ssh/id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
         # gitlab: https://gitlab-ci-token:${CI_XXX_TOKEN}@gitlab.example.com/group/repo.git
-        CMD_PREFIX=""
+        GIT_SSH_COMMAND="${SSH_EXE}"
         if [ -n "${SSH_KEY}" ]; then
-        echo "${SSH_KEY}" | ${BASE64_EXE} -d > ${HOST_TARGET_DIR}/id_rsa
-        chmod 600 ${HOST_TARGET_DIR}/id_rsa
-        CMD_PREFIX="GIT_SSH_COMMAND='${SSH_EXE} -i ${HOST_TARGET_DIR}/id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'"
+            echo "${SSH_KEY}" | ${BASE64_EXE} -d > ${HOST_TARGET_DIR}/id_rsa
+            chmod 600 ${HOST_TARGET_DIR}/id_rsa
+            GIT_SSH_COMMAND="${SSH_EXE} -i ${HOST_TARGET_DIR}/id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         fi
-            debug "mount/pull: ${CMD_PREFIX} ${GIT_EXE}  clone --single-branch \"${REPO}\" \"${REPO_MNT_DIR}\""
-            RES=$(${CMD_PREFIX} ${GIT_EXE} clone --single-branch "${REPO}" "${REPO_MNT_DIR}" 2>&1)
-            RC=$?
+        export GIT_SSH_COMMAND
+        debug "mount/pull: GIT_SSH_COMMAND=\"${GIT_SSH_COMMAND}\""
+        debug "mount/pull: ${GIT_EXE}  clone --single-branch \"${REPO}\" \"${REPO_MNT_DIR}\""
+        RES=$(${GIT_EXE} clone --single-branch "${REPO}" "${REPO_MNT_DIR}" 2>&1)
+        RC=$?
         if [ ${RC} -ne 0 ]; then
             debug "pull: ${RES}"
             rm -rf "${HOST_TARGET_DIR}" >/dev/null 2>&1
