@@ -68,16 +68,19 @@ describe: ## describe Pods executed from deployment
 	echo ""; echo ""; echo ""; \
 	done
 
+driver-tests: ## run standalone driver tests
+	cd tests && ./run-tests.sh
+
 test: namespace ## deploy test
 	kubectl apply -f tests/mount-test.yaml -n $(KUBE_NAMESPACE)
 
 test-results:  ## curl test
 	kubectl wait --for=condition=available deployment.v1.apps/nginx-deployment1 --timeout=180s
 	SVC_IP=$$(kubectl -n $(KUBE_NAMESPACE) get svc nginx1 -o json | jq -r '.spec.clusterIP') && \
-	curl http://$${SVC_IP}
+	curl http://$${SVC_IP} | head
 	kubectl wait --for=condition=available deployment.v1.apps/nginx-deployment2 --timeout=180s
 	SVC_IP=$$(kubectl -n $(KUBE_NAMESPACE) get svc nginx2 -o json | jq -r '.spec.clusterIP') && \
-	curl http://$${SVC_IP}
+	curl http://$${SVC_IP} | head
 
 test-clean:  ## clean down test
 	kubectl delete -f tests/mount-test.yaml -n $(KUBE_NAMESPACE) || true

@@ -28,7 +28,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: data
+  name: gitrepo-data
 spec:
   accessModes:
   - ReadWriteMany
@@ -109,7 +109,7 @@ spec:
       volumes:
       - name: www-data
         persistentVolumeClaim:
-          claimName: data
+          claimName: gitrepo-data
       - name: gitrepo-test-config
         configMap:
           name: gitrepo-test
@@ -163,7 +163,7 @@ spec:
       volumes:
       - name: www-data
         persistentVolumeClaim:
-          claimName: data
+          claimName: gitrepo-data
       - name: gitrepo-test-config
         configMap:
           name: gitrepo-test

@@ -31,6 +31,7 @@ Makefile:delete                delete deployment of gitrepo Flexvolume
 Makefile:delete_namespace      delete the kubernetes namespace
 Makefile:deploy                deploy gitrepo Flexvolume
 Makefile:describe              describe Pods executed from deployment
+Makefile:driver-tests          run standalone driver tests
 Makefile:help                  show this help.
 Makefile:image                 build deployment image
 Makefile:k8s                   Which kubernetes are we connected to
@@ -38,11 +39,9 @@ Makefile:kubectl_dependencies  Utility target to install kubectl dependencies
 Makefile:logs                  deployment logs
 Makefile:namespace             create the kubernetes namespace
 Makefile:push                  push deployment image
-Makefile:push_test             push test image
 Makefile:redeploy              redeploy operator
 Makefile:show                  show deployment of gitrepo Flexvolume
 Makefile:test-clean            clean down test
-Makefile:test_image            build test image
 Makefile:test                  deploy test
 Makefile:test-results          curl test
 
@@ -63,33 +62,6 @@ Makefile:TAG                   latest
 Testing the `gitrepo` driver can be performed using:
 ```
 $ make test && make test-results
-$ make test && make test-results
-docker build \
-  -t k8s-flexvol-gitrepo-test:latest -f Dockerfile.test .
-Sending build context to Docker daemon  139.8kB
-Step 1/6 : FROM busybox AS build
- ---> 19485c79a9bb
-Step 2/6 : WORKDIR /
- ---> Using cache
- ---> 27905904dc0c
-Step 3/6 : RUN   echo "This is a test from gitrepo!" >/index.html
- ---> Using cache
- ---> bd69021d211b
-Step 4/6 : FROM scratch
- --->
-Step 5/6 : WORKDIR /
- ---> Using cache
- ---> 994db783955d
-Step 6/6 : COPY --from=build /index.html /index.html
- ---> Using cache
- ---> 70e82947ab0f
-Successfully built 70e82947ab0f
-Successfully tagged k8s-flexvol-gitrepo-test:latest
-docker tag k8s-flexvol-gitrepo-test:latest piersharding/k8s-flexvol-gitrepo-test:latest
-docker push piersharding/k8s-flexvol-gitrepo-test:latest
-The push refers to repository [docker.io/piersharding/k8s-flexvol-gitrepo-test]
-3bd1128f98c6: Layer already exists
-latest: digest: sha256:95aff0700e891e6291d3a2cd60a45c8b8617930c3d64f2b52ba2ea8419777145 size: 524
 kubectl describe namespace "default" || kubectl create namespace "default"
 Name:         default
 Labels:       <none>
@@ -100,23 +72,21 @@ No resource quota.
 
 No resource limits.
 kubectl apply -f tests/mount-test.yaml -n "default"
-storageclass.storage.k8s.io/gitrepo unchanged
-persistentvolume/pv-flex-gitrepo-0001 unchanged
-persistentvolumeclaim/data unchanged
-service/nginx1 unchanged
-deployment.apps/nginx-deployment1 unchanged
-service/nginx2 unchanged
-deployment.apps/nginx-deployment2 unchanged
+storageclass.storage.k8s.io/gitrepo created
+persistentvolume/pv-flex-gitrepo-0001 created
+persistentvolumeclaim/gitrepo-data created
+configmap/gitrepo-test created
+service/nginx1 created
+deployment.apps/nginx-deployment1 created
+service/nginx2 created
+deployment.apps/nginx-deployment2 created
+ingress.extensions/gitrepo-test created
 kubectl wait --for=condition=available deployment.v1.apps/nginx-deployment1 --timeout=180s
 deployment.apps/nginx-deployment1 condition met
 SVC_IP=$(kubectl -n "default" get svc nginx1 -o json | jq -r '.spec.clusterIP') && \
 curl http://${SVC_IP}
-This is a test from gitrepo!
-kubectl wait --for=condition=available deployment.v1.apps/nginx-deployment2 --timeout=180s
-deployment.apps/nginx-deployment2 condition met
-SVC_IP=$(kubectl -n "default" get svc nginx2 -o json | jq -r '.spec.clusterIP') && \
-curl http://${SVC_IP}
-This is a test from gitrepo!
+# FlexVolume driver for Kubernetes: use Image as PersistentVolume
+...
 ```
 
 Note: you will need to provide your own registry by passing vars `CI_REGISTRY` and `CI_REPOSITORY` as appropriate.
@@ -200,6 +170,7 @@ spec:
       storage: 1Gi
   volumeName: "pv-flex-gitrepo-0002ssh"
   storageClassName: gitrepo
+
 ```
 
 The `${SSH_KEY}` value should be substituted with the `base64` encoded output of the relevent `ssh` private key for accessing the nominated repository.  Equivalent to the output of `cat ./id_rsa | base64 -w0`.
