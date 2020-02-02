@@ -110,7 +110,7 @@ domount() {
     JSON=$2
 
     REPO=$(echo ${JSON} | ${JQ_EXE} -r '.repo | select (.!=null)')
-    SSH_KEY=$(echo ${JSON} | ${JQ_EXE} -r '.sshKey | select (.!=null)')
+    SSH_KEY=$(echo ${JSON} | ${JQ_EXE} -r '."kubernetes.io/secret/sshKey" | select (.!=null)')
     TARGET=$(echo ${JSON} | ${JQ_EXE} -r '.hostTarget | select (.!=null)')
     POD_UID=$(echo ${JSON} | ${JQ_EXE} -r '.["kubernetes.io/pod.uid"]')
     HOST_TARGET=${TARGET:-${HOST_TARGET}}

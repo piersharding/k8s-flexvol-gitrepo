@@ -120,3 +120,86 @@ This is a test from gitrepo!
 ```
 
 Note: you will need to provide your own registry by passing vars `CI_REGISTRY` and `CI_REPOSITORY` as appropriate.
+
+## Git Repositories
+
+A repository available over open HTTP is addressed by:
+```
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-flex-gitrepo-0001
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  flexVolume:
+    driver: "piersharding/gitrepo"
+    options:
+      repo: "https://github.com/piersharding/k8s-flexvol-gitrepo.git"
+      hostTarget: /data/images
+  storageClassName: gitrepo
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: "pv-flex-gitrepo-0001"
+  storageClassName: gitrepo
+```
+
+A repository accessed via `ssh` is addressed by:
+```
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitrepo-pull-key
+type: piersharding/gitrepo
+data:
+  sshKey: "${SSH_KEY}"
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-flex-gitrepo-0002ssh
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  flexVolume:
+    driver: "piersharding/gitrepo"
+    secretRef:
+      name: gitrepo-pull-key
+    options:
+      repo: "git@github.com:piersharding/k8s-flexvol-gitrepo.git"
+      hostTarget: /data/images
+  storageClassName: gitrepo
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: "pv-flex-gitrepo-0002ssh"
+  storageClassName: gitrepo
+```
+
+The `${SSH_KEY}` value should be substituted with the `base64` encoded output of the relevent `ssh` private key for accessing the nominated repository.  Equivalent to the output of `cat ./id_rsa | base64 -w0`.
