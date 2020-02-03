@@ -46,6 +46,22 @@ show: k8s envsubst ## show deployment of gitrepo Flexvolume
 deploy: k8s envsubst ## deploy gitrepo Flexvolume
 	kustomize build ./deploy/overlays/envsub | kubectl -n $(DRIVER_NAMESPACE) apply -f -
 
+wait: ## wait check until deploy complete - then you can make delete
+	@sleep 3
+	@while true; do \
+	REQ=`kubectl -n $(DRIVER_NAMESPACE) get daemonset.apps/gitrepo-flex-ds -o=jsonpath="{.status.desiredNumberScheduled}"`; \
+	retcode=$$?; \
+	if [ $$retcode -gt 0 ]; then \
+	echo "Deploy failed."; exit 1; fi; \
+	READY=`kubectl -n $(DRIVER_NAMESPACE) get daemonset.apps/gitrepo-flex-ds -o=jsonpath="{.status.numberReady}"`; \
+	retcode=$$?; \
+	if [ $$retcode -gt 0 ]; then \
+	echo "Deploy failed."; exit 1; fi; \
+	if [ $$REQ -eq $$READY ]; then \
+	echo "Deploy complete."; exit 0; fi; \
+	sleep 5; \
+	done
+
 delete: k8s envsubst ## delete deployment of gitrepo Flexvolume
 	kustomize build ./deploy/overlays/envsub | kubectl -n $(DRIVER_NAMESPACE) delete --wait=true -f -
 

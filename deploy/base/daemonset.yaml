@@ -9,7 +9,7 @@ spec:
       labels:
         app:  gitrepo-flex-ds
     spec:
-      containers:
+      initContainers:
         # TODO Change to your container registry.
         - image: "k8s-flexvol-gitrepo:latest"
           imagePullPolicy: Always
@@ -50,6 +50,16 @@ spec:
               configMapKeyRef:
                 name: gitrepo-deploy-parameters
                 key: hostTarget
+
+      containers:
+        - image: "busybox:latest"
+          imagePullPolicy: IfNotPresent
+          name: sleeper
+          command:
+          - sleep
+          args:
+          - 365d
+        
       volumes:
         - name: flexvolume-mount
           hostPath:

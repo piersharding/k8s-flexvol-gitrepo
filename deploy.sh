@@ -78,7 +78,3 @@ cp "/$DRIVER" "/flexmnt/exec/$driver_dir/$tmp_driver"
 mv -f "/flexmnt/exec/$driver_dir/$tmp_driver" "/flexmnt/exec/$driver_dir/$DRIVER"
 
 printf "\n\n\n##### Deployment Complete #####\n"
-
-while : ; do
-    sleep 3600
-done
