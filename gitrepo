@@ -112,6 +112,7 @@ domount() {
     REPO=$(echo ${JSON} | ${JQ_EXE} -r '.repo | select (.!=null)')
     SSH_KEY=$(echo ${JSON} | ${JQ_EXE} -r '."kubernetes.io/secret/sshKey" | select (.!=null)')
     TARGET=$(echo ${JSON} | ${JQ_EXE} -r '.hostTarget | select (.!=null)')
+    READ_ONLY=$(echo ${JSON} | ${JQ_EXE} -r '."kubernetes.io/readwrite" | select (.!=null)')
     POD_UID=$(echo ${JSON} | ${JQ_EXE} -r '.["kubernetes.io/pod.uid"]')
     HOST_TARGET=${TARGET:-${HOST_TARGET}}
     REPO_DIR=$(echo "${REPO}" | sed 's/[^0-9A-Za-z_.]/_/g')
@@ -120,7 +121,7 @@ domount() {
     STATE_DIR=${REPO_MNT_DIR}/.gitrepo_state
 
     debug "domount: MNTPATH='${MNTPATH}' MOUNT_STATE_DIR='${STATE_DIR}' JSON='${JSON}'"
-    debug "domount params:  TARGET=\"${TARGET}\"  HOST_TARGET=\"${HOST_TARGET}\" REPO=\"${REPO}\" REPO_DIR=\"${REPO_DIR}\" HOST_TARGET_DIR=\"${HOST_TARGET_DIR}\" TEMP_REPO=\"${TEMP_REPO}\" 		REPO_MNT_DIR=\"${REPO_MNT_DIR}\" "
+    debug "domount params:  TARGET=\"${TARGET}\"  HOST_TARGET=\"${HOST_TARGET}\" REPO=\"${REPO}\" REPO_DIR=\"${REPO_DIR}\" HOST_TARGET_DIR=\"${HOST_TARGET_DIR}\" TEMP_REPO=\"${TEMP_REPO}\" 		REPO_MNT_DIR=\"${REPO_MNT_DIR}\"  READ_ONLY=\"${READ_ONLY}\" "
 
     # lock early and long
     # store state in IMAGE directory: from/to/image
@@ -189,12 +190,25 @@ checkandmount () {
     mkdir -p ${MNTPATH} &> /dev/null
     RES=$(mount --bind "${REPO_MNT_DIR}" "${MNTPATH}" 2>&1)
     if [ $? -ne 0 ]; then
-            debug "mount bind [${REPO_MNT_DIR} to ${MNTPATH}]: ${RES}"
-            rm -rf "${HOST_TARGET_DIR}" >/dev/null 2>&1
+        debug "mount bind [${REPO_MNT_DIR} to ${MNTPATH}]: ${RES}"
+        rm -rf "${HOST_TARGET_DIR}" >/dev/null 2>&1
         log "{ \"status\": \"Failure\", \"message\": \"Failed to mount ${REPO_MNT_DIR} at ${MNTPATH}\"}"
-            RC=1
+        RC=1
         exit 1
     fi
+
+	# remount ro if this should be read-only
+	if [ "${READ_ONLY}" != "rw" ]; then
+        debug "mounting READ ONLY!"
+		RES=$(mount -o remount,bind,ro "${REPO_MNT_DIR}" "${MNTPATH}" 2>&1)
+		if [ $? -ne 0 ]; then
+            debug "remount bind ro [${REPO_MNT_DIR} to ${MNTPATH}]: ${RES}"
+            rm -rf "${HOST_TARGET_DIR}" >/dev/null 2>&1
+			log "{ \"status\": \"Failure\", \"message\": \"Failed to remount ro ${REPO_MNT_DIR} at ${MNTPATH}\"}"
+            RC=1
+			exit 1
+		fi
+	fi
 
     echo "${REPO_MNT_DIR}" > ${STATE_DIR}/from
     echo "${MNTPATH}" >> ${STATE_DIR}/to

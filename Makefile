@@ -104,7 +104,7 @@ test-clean:  ## clean down test
 
 cleanall: test-clean clean  ## Clean all
 
-redeploy: cleanall push deploy  ## redeploy operator
+redeploy: cleanall push deploy wait clean ## redeploy driver
 
 namespace: ## create the kubernetes namespace
 	kubectl describe namespace $(KUBE_NAMESPACE) || kubectl create namespace $(KUBE_NAMESPACE)
